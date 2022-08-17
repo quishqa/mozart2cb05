@@ -66,28 +66,40 @@ def creating_wrfchemi_cb05(wrfchemi_moz_path):
     emiss_list = get_emiss_list(wrfchemi)
     wrfchemi_cb05 = xr.Dataset()
     wrfchemi_cb05["Time"] = wrfchemi["Time"]
+    wrfchemi_cb05["Times"] = wrfchemi["Times"]
     moz2cb05 = mozart_cb05_mapping()
 
     for E_CB05 in moz2cb05.keys():
         wrfchemi_cb05[E_CB05] = emiss_mozart_to_cb05(wrfchemi,
                                                      moz2cb05[E_CB05][0],
                                                      moz2cb05[E_CB05][1])
+    wrfchemi_cb05.attrs = wrfchemi.attrs
     return wrfchemi_cb05
 
 
+def writting_netcdf(wrfchemi_cb05, file_name, path="../results/"):
+    full_name = path + file_name
+    wrfchemi_cb05.to_netcdf(full_name,
+                            encoding={
+                                "Times": {
+                                    "char_dim_name": "DateStrLen"
+                                }
+                            },
+                            unlimited_dims={"Time": True},
+                            format="NETCDF3_64BIT")
+
 if __name__ == "__main__":
-    wrfchemi_path = "../data/wrfchemi_00z_d01"
-    wrfchemi = open_wrfchemis(wrfchemi_path)
-    emiss_list = get_emiss_list(wrfchemi)
-    wrfchemi_cb05 = xr.Dataset()
-    wrfchemi_cb05["Time"] = wrfchemi["Time"]
+    wrfchemi_moz_path_00z = "../data/wrfchemi_00z_d01"
+    wrfchemi_moz_path_12z = "../data/wrfchemi_12z_d01"
+    wrfchemi00z = xr.open_dataset(wrfchemi_moz_path_00z)
+    wrfchemi12z = xr.open_dataset(wrfchemi_moz_path_12z)
+    wrfchemi_cb05_00z = creating_wrfchemi_cb05(wrfchemi_moz_path_00z)
+    wrfchemi_cb05_12z = creating_wrfchemi_cb05(wrfchemi_moz_path_12z)
 
-    moz2cb05 = mozart_cb05_mapping()
+    writting_netcdf(wrfchemi_cb05_00z, "wrfchemi_00z_d01_cb05")
+    writting_netcdf(wrfchemi_cb05_12z, "wrfchemi_12z_d01_cb05")
+    
 
-    for E_CB05 in moz2cb05.keys():
-        wrfchemi_cb05[E_CB05] = emiss_mozart_to_cb05(wrfchemi,
-                                                     moz2cb05[E_CB05][0],
-                                                     moz2cb05[E_CB05][1])
 
 
 
